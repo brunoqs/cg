@@ -27,23 +27,21 @@ class MyIH : public ViewerGlutOGL::IdleHandler {
         // angulo de rotacao da bolas
         double rotationHelice = 0.1;
         double rotationBase = 0;
-        bool indo = false;
+        bool indo = true;
     public:
         // transformacoes que ocorrerao durante a execucao do programa
         Transform* rotZhelice;
-        Transform* rotZbase;
+        Transform* rotYNonBase;
         MyIH() {
         }
         virtual ~MyIH(){
         }
 
         virtual void OnIdle() {
-            // faz a rotacao em X da bola
+            // faz a rotacao no eixo X 'transladado' para o centro da helice
             rotZhelice->MakeRotation(Point4D(0, 1.228443, 0, 1), Point4D::X(), rotationHelice);
-            rotZbase->MakeRotation(Point4D(0, 0, 0, 1), Point4D::Y(), rotationBase);
-            // faz a rotacao em Y da bola
-            // rotationYBola->MakeRotation(Point4D::Y(), rotationBolaParameter);
-            // varia o angulo de rotacao
+            // rotaciona todo objeto que nao eh base
+            rotYNonBase->MakeRotation(Point4D(0, 0, 0, 1), Point4D::Y(), rotationBase);
             rotationHelice += 0.5;
 
             if (!indo) {
@@ -86,8 +84,9 @@ int main(int argc, char* argv[])
 
     MeshObject* helice;
     MeshObject* base;
-    MeshObject* none;
+    MeshObject* suporteEixo;
     MeshObject* grade;
+    MeshObject* eixo;
 
     for (; iter != objects.end(); ++iter) {
         if((*iter)->GetDescription() == "helice"){
@@ -99,16 +98,17 @@ int main(int argc, char* argv[])
         else if ((*iter)->GetDescription() == "grade") {
             grade = *iter;
         }
-		else if((*iter)->GetDescription() != "base"){
-			none = *iter;
+        else if ((*iter)->GetDescription() == "eixo") {
+            eixo = *iter;
+        }
+		else if((*iter)->GetDescription() == "suporte-eixo"){
+			suporteEixo = *iter;
 		}
     }
 
-    // HeliceRotation.AddChild(helice);
-    // HeliceRotation.MakeTranslation(10, 0, 0);
-
     HeliceRotation.AddChild(*helice);
-    Giro.AddChild(*none);
+    Giro.AddChild(*eixo);
+    Giro.AddChild(*suporteEixo);
     Giro.AddChild(*grade);
     Giro.AddChild(HeliceRotation);
 
@@ -117,7 +117,7 @@ int main(int argc, char* argv[])
 
     MyIH idle;
     idle.rotZhelice = &HeliceRotation;
-    idle.rotZbase = &Giro;
+    idle.rotYNonBase = &Giro;
 	
 
     scene.AddLight(Light::BRIGHT_AMBIENT());
