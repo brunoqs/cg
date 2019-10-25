@@ -53,7 +53,8 @@ int main(int argc, char* argv[]) {
     static ViewerGlutOGL viewer;
     static Scene scene;
 
-	Camera camera(Point4D(100, 0, 0), Point4D::ORIGIN(), Point4D::Y());
+	Camera camera(Point4D(200, 0, 0), Point4D::ORIGIN(), Point4D::Y());
+    camera.SetFarPlaneDistance(300);
 
     // leitura dos objetos
     list<MeshObject*> objects;
@@ -100,6 +101,7 @@ int main(int argc, char* argv[]) {
     //Add a light to the scene.
     scene.AddLight( Light::BRIGHT_AMBIENT() );
     scene.AddCamera(&camera);
+    scene.AddObject(support);
     scene.DrawLightsOGL();
 
     //Setup the viewer.
@@ -108,8 +110,8 @@ int main(int argc, char* argv[]) {
     viewer.SetIdleHandler(&idle);
 
     //Enable texture in OpenGL
-    glEnable( GL_TEXTURE_2D );
-    glEnableClientState( GL_TEXTURE_COORD_ARRAY );
+    // glEnable( GL_TEXTURE_2D );
+    // glEnableClientState( GL_TEXTURE_COORD_ARRAY );
 
     //Enter the main loop
     VART::ViewerGlutOGL::MainLoop();
