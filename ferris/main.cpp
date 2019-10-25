@@ -6,43 +6,45 @@
 #include <vart/texture.h>
 #include <vart/transform.h>
 
+#include <math.h>
+#define _USE_MATH_DEFINES
+
+#define CHAIRS_COUNT 10
+#define WHEEL_RADIUS 70
+#define ANGLE_BETWEEN_CHAIRS (2 * M_PI) / CHAIRS_COUNT
 
 using namespace std;
 using namespace VART;
 
 class MyIH : public ViewerGlutOGL::IdleHandler {
     private:
-        // angulo de rotacao da bolas
-        double rotationTerraParameter = 0.1;
-        double rotationTerraSi = 0.1;
-        double rotationluaParameter = 0.1;
+        double rotXWheelParameter = 0.1;
+        double dy = 0.0, dz = 0.0;
         
     public:
         // transformacoes que ocorrerao durante a execucao do programa
-        Transform* rotZterra;
-        Transform* rotZterraSi;
-        Transform* rotZlua;
+        Transform* rotXWheel;
+        vector<Transform*> trans_chairs;
+        
         MyIH() {
         }
         virtual ~MyIH(){
         }
 
         virtual void OnIdle() {
-            // faz a rotacao em X da bola
-            rotZterra->MakeRotation(Point4D::Z(), rotationTerraParameter);
-            rotZterraSi->MakeRotation(Point4D::Z(), rotationTerraSi);
-            rotZlua->MakeRotation(Point4D::Z(), rotationluaParameter);
-            // faz a rotacao em Y da bola
-            // rotationYBola->MakeRotation(Point4D::Y(), rotationBolaParameter);
-            // varia o angulo de rotacao
-            rotationTerraParameter += 0.01;
-            rotationTerraSi += 0.03;
-            rotationluaParameter += 0.1;
+            rotXWheel->MakeRotation(Point4D::X(), rotXWheelParameter);
+
+            for(int i = 0; i < CHAIRS_COUNT; i++) {
+                dy = WHEEL_RADIUS * sin(rotXWheelParameter + ANGLE_BETWEEN_CHAIRS*i);
+                dz = WHEEL_RADIUS * -cos(rotXWheelParameter + ANGLE_BETWEEN_CHAIRS*i);
+                trans_chairs[i]->MakeTranslation(0.0, dy, dz);
+            }
+
+            rotXWheelParameter += 0.01;
 
             viewerPtr->PostRedisplay();
         }
 };
-
 
 
 int main(int argc, char* argv[]) {
@@ -51,40 +53,49 @@ int main(int argc, char* argv[]) {
     static ViewerGlutOGL viewer;
     static Scene scene;
 
-	Camera camera(Point4D(0, 0, 10), Point4D(0, 0, 0), Point4D(0, 1, 0));
+	Camera camera(Point4D(100, 0, 0), Point4D::ORIGIN(), Point4D::Y());
 
     // leitura dos objetos
-    list<MeshObject*> listObjs;
-    MeshObject::ReadFromOBJ("ferris-wheel.obj", &listObjs);
+    list<MeshObject*> objects;
+    MeshObject::ReadFromOBJ("ferris-wheel.obj", &objects);
 
-    vector<MeshObject*> objects = {begin(listObjs), end(listObjs)};
+    list<MeshObject*>::iterator iter = objects.begin();
 
     MeshObject* chair;
     MeshObject* support;
     MeshObject* wheel;
 
     // reconhecimento dos obejtos
-    for(unsigned int i = 0; i < objects.size(); i++) {
-        if(objects[i]->GetDescription() == "chair") {
-            chair = objects[i];
+    for (; iter != objects.end(); ++iter) {
+        if((*iter)->GetDescription() == "chair") {
+            chair = *iter;
         }
-        if(objects[i]->GetDescription() == "support") {
-            support = objects[i];
+        if((*iter)->GetDescription() == "support") {
+            support = *iter;
         }
-        if(objects[i]->GetDescription() == "wheel") {
-            wheel = objects[i];
+        if((*iter)->GetDescription() == "wheel") {
+            wheel = *iter;
         }
     }
 
-    Transform Tchair;
+    // WHEEL
+    Transform rotXWheel;
+    rotXWheel.AddChild(*wheel);
+    scene.AddObject(&rotXWheel);
 
-    Tchair.AddChild(chair);
-
-    scene.AddObject(Tchair);
-    // scene.AddObject(&rotZterra);
-    // scene.AddObject();
+    // CHAIRS
+    vector<Transform*> trans_chairs;
+    // para cada cadeira, cria uma transformacao
+    for (int i = 0; i < CHAIRS_COUNT; i++){
+        Transform *transform = new Transform();
+        transform->AddChild(*chair);
+        trans_chairs.push_back(transform);
+        scene.AddObject(trans_chairs[i]);
+    }
 
     MyIH idle;
+    idle.rotXWheel = &rotXWheel;
+    idle.trans_chairs = trans_chairs;
 
     //Add a light to the scene.
     scene.AddLight( Light::BRIGHT_AMBIENT() );
@@ -96,7 +107,6 @@ int main(int argc, char* argv[]) {
     viewer.SetScene(scene);
     viewer.SetIdleHandler(&idle);
 
-    // viewer.SetIdleHandler(&idle);
     //Enable texture in OpenGL
     glEnable( GL_TEXTURE_2D );
     glEnableClientState( GL_TEXTURE_COORD_ARRAY );
