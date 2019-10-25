@@ -1,13 +1,3 @@
-// main.cpp - transform animation example
-
-// V-ART example: Moving objects with an idle handler
-
-// This application shows how to use ViewerGlutOGL's idle handler to animate objects.
-
-// Changelog
-// Jun 17, 2008 - Bruno de Oliveira Schneider
-// - Application created.
-
 #include <vart/scene.h>
 #include <vart/light.h>
 #include <vart/sphere.h>
@@ -50,7 +40,7 @@ class MyIH : public ViewerGlutOGL::IdleHandler {
                 rotationBase += 0.01;
             }
 
-            if (rotationBase >= M_PI) {
+            if (rotationBase >= M_PI / 2) {
                 indo = false;
             }
             else if(rotationBase <= -M_PI / 2)  {
@@ -71,7 +61,7 @@ int main(int argc, char* argv[])
     static ViewerGlutOGL viewer; // create a viewer (application window)
 
     // create a camera (scene observer)
-    Camera camera(Point4D(0,0,6),Point4D(0,0,0),Point4D(0,1,0,0));
+    Camera camera(Point4D(-10,0,0),Point4D(0,0,0),Point4D(0,1,0,0));
     // create some objects
     list<MeshObject*> objects;
 
